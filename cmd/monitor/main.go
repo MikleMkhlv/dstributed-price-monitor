@@ -24,7 +24,7 @@ func main() {
 	cfg := config.MustLoadConfig(configPath())
 	sources := source.NewSource(*cfg)
 	tic := time.Second * time.Duration(cfg.Scheduler.Timeout)
-	worker := worker.New(cfg.Scheduler.CountWorker)
+	worker := worker.New(cfg.Scheduler.CountWorker, cfg.Scheduler.MaxCalls)
 
 	wg.Add(1)
 	go func() {
