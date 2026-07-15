@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"context"
-	"dstributed-price-monitor/cmd/monitor/internal/scheduler/source"
+	"dstributed-price-monitor/internal/source"
 	"log"
 	"sync"
 	"time"

@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"dstributed-price-monitor/cmd/monitor/internal/scheduler"
-	"dstributed-price-monitor/cmd/monitor/internal/scheduler/source"
 	"dstributed-price-monitor/config"
+	"dstributed-price-monitor/internal/scheduler"
+	"dstributed-price-monitor/internal/source"
 	"flag"
 	"log"
 	"os/signal"
