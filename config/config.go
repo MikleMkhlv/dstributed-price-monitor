@@ -10,6 +10,8 @@ import (
 
 type Config struct {
 	Scheduler SchedulerConfig `yaml:"schedulerConfiguration"`
+	Database  DatabaseConfig  `yaml:"database"`
+	Redis     RedisConfig     `yaml:"redis"`
 	Sources   []Sources       `yaml:"sources"`
 }
 type SchedulerConfig struct {
@@ -17,6 +19,20 @@ type SchedulerConfig struct {
 	Timeout     int `yaml:"timeout"`
 	CountWorker int `yaml:"countWorker"`
 	MaxCalls    int `yaml:"maxCalls"`
+}
+
+type DatabaseConfig struct {
+	Address  string `yaml:"address"`
+	Table    string `yaml:"table"`
+	Schema   string `yaml:"schema"`
+	Login    string `yaml:"login"`
+	Password string `yaml:"password"`
+}
+
+type RedisConfig struct {
+	Address  string `yaml:"address"`
+	Login    string `yaml:"login"`
+	Password string `yaml:"password"`
 }
 
 type Sources struct {
