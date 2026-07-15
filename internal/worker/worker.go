@@ -26,32 +26,10 @@ func New(countWorker int, maxCallsSem int) *Worker {
 }
 
 func (w *Worker) RunWorker(ctx context.Context, tasksCh chan source.Record, outCh chan source.ServiceData, errCh chan error) {
-	// for i := 1; i <= w.count; i++ {
-	// 	w.wg.Add(1)
-	// 	select {
-	// 	case <-ctx.Done():
-	// 		errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
-	// 		return
-	// 	case task := <-tasksCh:
-	// 		go func() {
-	// 			log.Printf("worker.RunWorker: worker-%d took on the task", i)
-	// 			defer w.wg.Done()
-	// 			task.Pool(ctx, outCh, errCh)
-	// 		}()
-	// 	}
-	// }
-
 	for i := 1; i <= w.count; i++ {
-
 		if !w.semaphore.AcquireCtx(ctx) {
-			select {
-			case <-ctx.Done():
-				errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
-				return
-			default:
-			}
+			return
 		}
-
 		w.wg.Add(1)
 		go func(workerIndex int) {
 			defer w.semaphore.Release()

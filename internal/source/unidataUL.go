@@ -124,7 +124,7 @@ func (ctz Organization) IsImpl() {}
 
 func (ctz Organization) String() string {
 	var citizen strings.Builder
-	fmt.Fprintf(&citizen, "HeadfirstName:%s, HeadLastName:%s, HeadMiddleName:%s, valMask:%d\n", ctz.Data.HeadFirstName,
+	fmt.Fprintf(&citizen, "HeadfirstName:%s, HeadLastName:%s, HeadMiddleName:%s, valMask:%s\n", ctz.Data.HeadFirstName,
 		ctz.Data.HeadLastName, ctz.Data.HeadMiddleName, ctz.Data.Position)
 	return citizen.String()
 }

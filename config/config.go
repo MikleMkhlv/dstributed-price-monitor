@@ -33,6 +33,7 @@ type RedisConfig struct {
 	Address  string `yaml:"address"`
 	Login    string `yaml:"login"`
 	Password string `yaml:"password"`
+	NumberDB int    `yaml:"numberDB"`
 }
 
 type Sources struct {
