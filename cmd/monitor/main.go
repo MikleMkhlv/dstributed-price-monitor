@@ -5,6 +5,7 @@ import (
 	"dstributed-price-monitor/config"
 	"dstributed-price-monitor/internal/scheduler"
 	"dstributed-price-monitor/internal/source"
+	"dstributed-price-monitor/internal/worker"
 	"flag"
 	"log"
 	"os/signal"
@@ -18,16 +19,23 @@ func main() {
 	defer cancel()
 	wg := sync.WaitGroup{}
 	outCh := make(chan source.ServiceData)
-	errorCh := make(chan error, 10)
+	errorCh := make(chan error, 100)
+	tasksCh := make(chan source.Record)
 	cfg := config.MustLoadConfig(configPath())
 	sources := source.NewSource(*cfg)
-
 	tic := time.Second * time.Duration(cfg.Scheduler.Timeout)
+	worker := worker.New(cfg.Scheduler.CountWorker)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		scheduler.RunScheduler(ctx, sources, tic, outCh, errorCh)
+		worker.RunWorker(ctx, tasksCh, outCh, errorCh)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		scheduler.RunScheduler(ctx, sources, tic, tasksCh, errorCh)
 	}()
 
 	wg.Add(1)

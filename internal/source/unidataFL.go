@@ -8,19 +8,21 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 type UnidataFLSource struct {
-	url    string
-	method string
-	mdmIds []string
-	client *http.Client
-	wg     sync.WaitGroup
+	url     string
+	method  string
+	mdmIds  []string
+	timeOut int
+	client  *http.Client
+	wg      sync.WaitGroup
 }
 
 // func (c *UnidataFLSource) isSourceRecord() {}
 
-func NewUnidataFLSource(url string, method string, data []string) (*UnidataFLSource, error) {
+func NewUnidataFLSource(url string, method string, timeout int, data []string) (*UnidataFLSource, error) {
 	if url == "" {
 		return nil, fmt.Errorf("source.NewUnidataFLSource: url must not be empty")
 	}
@@ -31,19 +33,22 @@ func NewUnidataFLSource(url string, method string, data []string) (*UnidataFLSou
 		return nil, fmt.Errorf("source.NewUnidataFLSource: data must not be empty")
 	}
 	return &UnidataFLSource{
-		url:    url,
-		method: method,
-		mdmIds: data,
-		client: &http.Client{},
-		wg:     sync.WaitGroup{},
+		url:     url,
+		method:  method,
+		mdmIds:  data,
+		timeOut: timeout,
+		client:  &http.Client{},
+		wg:      sync.WaitGroup{},
 	}, nil
 }
 
 func (c *UnidataFLSource) Pool(ctx context.Context, outCh chan ServiceData, errCh chan error) {
 	for _, id := range c.mdmIds {
 		func() {
+			ctxT, cancel := context.WithTimeout(ctx, time.Duration(time.Second*time.Duration(c.timeOut)))
+			defer cancel()
 			select {
-			case <-ctx.Done():
+			case <-ctxT.Done():
 				errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
 				return
 			default:
@@ -57,35 +62,35 @@ func (c *UnidataFLSource) Pool(ctx context.Context, outCh chan ServiceData, errC
 				case errCh <- errMessage:
 				}
 			}
-			req, err := http.NewRequestWithContext(ctx, "GET", buildFullUrl(c.url, c.method, id), nil)
+			req, err := http.NewRequestWithContext(ctxT, "GET", buildFullUrl(c.url, c.method, id), nil)
 			if err != nil {
-				errSend(ctx, fmt.Errorf("source.UnidataFLSource.Pool: error pool request: %v", err))
+				errSend(ctxT, fmt.Errorf("source.UnidataFLSource.Pool: error pool request: %v", err))
 				return
 			}
-			log.Printf("source.UnidataFLSource.Pool: send request in %s", buildFullUrl(c.url, c.method, id))
+			log.Printf("source.UnidataFLSource.Pool:{%v}: send request in %s", ctxT.Value("operId"), buildFullUrl(c.url, c.method, id))
 			resp, err := c.client.Do(req)
 			if err != nil {
-				errSend(ctx, fmt.Errorf("source.UnidataFLSource.Pool: error send request: %v", err))
+				errSend(ctxT, fmt.Errorf("source.UnidataFLSource.Pool: error send request: %v", err))
 				return
 			}
 			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
-				errSend(ctx, fmt.Errorf("source.UnidataFLSource.Poll: unexpected status code: %d", resp.StatusCode))
+				errSend(ctxT, fmt.Errorf("source.UnidataFLSource.Poll: unexpected status code: %d", resp.StatusCode))
 				return
 			}
-			log.Printf("source.Pool: status code - %d", resp.StatusCode)
+			log.Printf("source.Pool:{%v}: status code - %d", ctxT.Value("operId"), resp.StatusCode)
 
 			var citizens []Citizen
 			decoder := json.NewDecoder(resp.Body)
 			if err := decoder.Decode(&citizens); err != nil {
-				errSend(ctx, fmt.Errorf("source.UnidataFLSource.Pool: error decode request body: %v", err))
+				errSend(ctxT, fmt.Errorf("source.UnidataFLSource.Pool: error decode request body: %v", err))
 				return
 			}
 			if len(citizens) == 0 {
-				log.Printf("source.UnidataFLSource.Pool: citizen %s does not exist", id)
+				log.Printf("source.UnidataFLSource.Pool:%v: citizen %s does not exist", ctxT.Value("operId"), id)
 				select {
-				case <-ctx.Done():
+				case <-ctxT.Done():
 					errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
 				case errCh <- fmt.Errorf("source.UnidataFLSource.Pool: citizen %s does not exist", id):
 					return
@@ -95,7 +100,7 @@ func (c *UnidataFLSource) Pool(ctx context.Context, outCh chan ServiceData, errC
 			// log.Printf("source.Pool: decode citizen complete. %s", citizens[0].String())
 
 			select {
-			case <-ctx.Done():
+			case <-ctxT.Done():
 				errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
 				return
 			case outCh <- citizens[0]:

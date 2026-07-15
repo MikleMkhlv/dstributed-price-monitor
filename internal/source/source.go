@@ -15,7 +15,6 @@ type ServiceData interface {
 }
 type Source struct {
 	Sources map[string]Record
-	// mx      sync.Mutex
 }
 
 func NewSource(cfg config.Config) *Source {
@@ -28,7 +27,7 @@ func NewSource(cfg config.Config) *Source {
 				log.Printf("source.NewSource: unexpected data type for %s", src.Type)
 				continue
 			}
-			s, err := NewUnidataFLSource(src.URL, src.Method, data.MdmIds)
+			s, err := NewUnidataFLSource(src.URL, src.Method, cfg.Scheduler.Timeout, data.MdmIds)
 			if err != nil {
 				log.Printf("source.NewSource: %v\n", err)
 				continue
@@ -40,7 +39,7 @@ func NewSource(cfg config.Config) *Source {
 				log.Printf("source.NewSource: unexpected data type for %s", src.Type)
 				continue
 			}
-			s, err := NewUnidataULSource(src.URL, src.Method, data.MdmIds)
+			s, err := NewUnidataULSource(src.URL, src.Method, cfg.Scheduler.Timeout, data.MdmIds)
 			if err != nil {
 				log.Printf("source.NewSource: %v\n", err)
 				continue

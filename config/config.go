@@ -13,8 +13,10 @@ type Config struct {
 	Sources   []Sources       `yaml:"sources"`
 }
 type SchedulerConfig struct {
-	Interval int `yaml:"interval"`
-	Timeout  int `yaml:"timeout"`
+	Interval    int `yaml:"interval"`
+	Timeout     int `yaml:"timeout"`
+	CountWorker int `yaml:"countWorker"`
+	MaxCalls    int `yaml:"maxCalls"`
 }
 
 type Sources struct {

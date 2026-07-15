@@ -8,19 +8,22 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 type UnidataULSource struct {
 	url    string
 	method string
 	mdmIds []string
-	client *http.Client
-	wg     sync.WaitGroup
+
+	timeOut int
+	client  *http.Client
+	wg      sync.WaitGroup
 }
 
 func (c *UnidataULSource) isSourceRecord() {}
 
-func NewUnidataULSource(url string, method string, data []string) (*UnidataULSource, error) {
+func NewUnidataULSource(url string, method string, timeOut int, data []string) (*UnidataULSource, error) {
 	if url == "" {
 		return nil, fmt.Errorf("source.UnidataULSource.NewUnidataULSource: url must not be empty")
 	}
@@ -31,19 +34,22 @@ func NewUnidataULSource(url string, method string, data []string) (*UnidataULSou
 		return nil, fmt.Errorf("source.UnidataULSource.NewUnidataULSource: data must not be empty")
 	}
 	return &UnidataULSource{
-		url:    url,
-		method: method,
-		mdmIds: data,
-		client: &http.Client{},
-		wg:     sync.WaitGroup{},
+		url:     url,
+		method:  method,
+		mdmIds:  data,
+		timeOut: timeOut,
+		client:  &http.Client{},
+		wg:      sync.WaitGroup{},
 	}, nil
 }
 
 func (c *UnidataULSource) Pool(ctx context.Context, outCh chan ServiceData, errCh chan error) {
 	for _, id := range c.mdmIds {
 		func() {
+			ctxT, cancel := context.WithTimeout(ctx, time.Duration(time.Second*time.Duration(c.timeOut)))
+			defer cancel()
 			select {
-			case <-ctx.Done():
+			case <-ctxT.Done():
 				errCh <- fmt.Errorf("source.UnidataULSource.Pool: context cancel")
 				return
 			default:
@@ -57,35 +63,35 @@ func (c *UnidataULSource) Pool(ctx context.Context, outCh chan ServiceData, errC
 				case errCh <- errMessage:
 				}
 			}
-			req, err := http.NewRequestWithContext(ctx, "GET", buildFullUrl(c.url, c.method, id), nil)
+			req, err := http.NewRequestWithContext(ctxT, "GET", buildFullUrl(c.url, c.method, id), nil)
 			if err != nil {
-				errSend(ctx, fmt.Errorf("source.UnidataULSource.Pool: error pool request: %v", err))
+				errSend(ctxT, fmt.Errorf("source.UnidataULSource.Pool: error pool request: %v", err))
 				return
 			}
-			log.Printf("source.UnidataULSource.Pool: send request in %s", buildFullUrl(c.url, c.method, id))
+			log.Printf("source.UnidataULSource.Pool:{%v}: send request in %s", ctxT.Value("operId"), buildFullUrl(c.url, c.method, id))
 			resp, err := c.client.Do(req)
 			if err != nil {
-				errSend(ctx, fmt.Errorf("source.UnidataULSource.Pool: error send request: %v", err))
+				errSend(ctxT, fmt.Errorf("source.UnidataULSource.Pool: error send request: %v", err))
 				return
 			}
 			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
-				errSend(ctx, fmt.Errorf("source.UnidataULSource.Poll: unexpected status code: %d", resp.StatusCode))
+				errSend(ctxT, fmt.Errorf("source.UnidataULSource.Poll: unexpected status code: %d", resp.StatusCode))
 				return
 			}
-			log.Printf("source.UnidataULSource.Pool: status code - %d", resp.StatusCode)
+			log.Printf("source.UnidataULSource.Pool:{%v}: status code - %d", ctxT.Value("operId"), resp.StatusCode)
 
 			var org []Organization
 			decoder := json.NewDecoder(resp.Body)
 			if err := decoder.Decode(&org); err != nil {
-				errSend(ctx, fmt.Errorf("source.UnidataULSource.Pool: error decode request body: %v", err))
+				errSend(ctxT, fmt.Errorf("source.UnidataULSource.Pool: error decode request body: %v", err))
 				return
 			}
 			if len(org) == 0 {
-				log.Printf("source.UnidataULSource.Pool: org %s does not exist", id)
+				log.Printf("source.UnidataULSource.Pool:{%v}: org %s does not exist", ctxT.Value("operId"), id)
 				select {
-				case <-ctx.Done():
+				case <-ctxT.Done():
 					errCh <- fmt.Errorf("source.UnidataULSource.Pool: context cancel")
 				case errCh <- fmt.Errorf("source.UnidataULSource.Pool: org %s does not exist", id):
 					return
@@ -94,7 +100,7 @@ func (c *UnidataULSource) Pool(ctx context.Context, outCh chan ServiceData, errC
 			}
 
 			select {
-			case <-ctx.Done():
+			case <-ctxT.Done():
 				errCh <- fmt.Errorf("source.UnidataULSource.Pool: context cancel")
 				return
 			case outCh <- org[0]:
