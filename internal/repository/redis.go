@@ -19,10 +19,9 @@ type Redis struct {
 	ttl       time.Duration
 }
 
-func NewRedis(ctx context.Context, cfg config.Config) *Redis {
+func NewRedis(ctx context.Context, cfg *config.Config) *Redis {
 	rcl := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Address,
-		Username: cfg.Redis.Login,
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.NumberDB,
 	})

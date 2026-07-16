@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"dstributed-price-monitor/config"
+	"dstributed-price-monitor/internal/repository"
 	"dstributed-price-monitor/internal/scheduler"
 	"dstributed-price-monitor/internal/source"
 	"dstributed-price-monitor/internal/worker"
@@ -25,6 +26,9 @@ func main() {
 	sources := source.NewSource(*cfg)
 	tic := time.Second * time.Duration(cfg.Scheduler.Timeout)
 	worker := worker.New(cfg.Scheduler.CountWorker, cfg.Scheduler.MaxCalls)
+
+	db := repository.NewPG(ctx, cfg)
+	rds := repository.NewRedis(ctx, cfg)
 
 	wg.Add(1)
 	go func() {
@@ -59,6 +63,8 @@ func main() {
 		wg.Wait()
 		close(outCh)
 		close(errorCh)
+		db.Close()
+		rds.Close()
 	}()
 }
 

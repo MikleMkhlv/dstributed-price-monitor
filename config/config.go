@@ -28,11 +28,11 @@ type DatabaseConfig struct {
 	Schema   string `yaml:"schema"`
 	Login    string `yaml:"login"`
 	Password string `yaml:"password"`
+	SslMode  string `yaml:"sslMode"`
 }
 
 type RedisConfig struct {
 	Address  string      `yaml:"address"`
-	Login    string      `yaml:"login"`
 	Password string      `yaml:"password"`
 	NumberDB int         `yaml:"numberDB"`
 	Db       RedisDBConf `yaml:"db"`
