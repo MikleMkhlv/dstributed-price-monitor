@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -30,10 +31,16 @@ type DatabaseConfig struct {
 }
 
 type RedisConfig struct {
-	Address  string `yaml:"address"`
-	Login    string `yaml:"login"`
-	Password string `yaml:"password"`
-	NumberDB int    `yaml:"numberDB"`
+	Address  string      `yaml:"address"`
+	Login    string      `yaml:"login"`
+	Password string      `yaml:"password"`
+	NumberDB int         `yaml:"numberDB"`
+	Db       RedisDBConf `yaml:"db"`
+}
+
+type RedisDBConf struct {
+	Ttl       time.Duration `yaml:"ttl"`
+	KeyPrefix string        `yaml:"keyPrefix"`
 }
 
 type Sources struct {

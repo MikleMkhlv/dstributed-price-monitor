@@ -18,7 +18,7 @@ func NewPG(ctx context.Context, cfg *config.Config) *Postgres {
 	connStr := createConnectionStr(cfg)
 	dbPool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
-		panic(fmt.Sprintf("failed connection to database %s: %v", err))
+		panic(fmt.Sprintf("failed connection to database %s: %v", connStr, err))
 	}
 
 	if err := dbPool.Ping(ctx); err != nil {
