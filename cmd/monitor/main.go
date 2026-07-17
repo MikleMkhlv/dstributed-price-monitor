@@ -25,7 +25,7 @@ func main() {
 	tasksCh := make(chan source.Record)
 	cfg := config.MustLoadConfig(configPath())
 	sources := source.NewSource(*cfg)
-	tic := time.Second * time.Duration(cfg.Scheduler.Timeout)
+	tic := time.Second * time.Duration(cfg.Scheduler.Interval)
 	worker := worker.New(cfg.Scheduler.CountWorker, cfg.Scheduler.MaxCalls)
 
 	db := repository.NewPG(ctx, cfg)

@@ -9,26 +9,48 @@ import (
 )
 
 func RunScheduler(ctx context.Context, src *source.Source, tik time.Duration, tasksCh chan source.Record, errCh chan error) {
-	t := time.NewTicker(tik)
-	defer t.Stop()
+	if src == nil || src.Sources == nil {
+		select {
+		case errCh <- fmt.Errorf("source.UnidataFLSource.Pool: nil source"):
+		default:
+		}
+		close(tasksCh)
+		return
+	}
+
+	timer := time.NewTimer(tik)
+	defer timer.Stop()
 	defer close(tasksCh)
+
 	for {
 		select {
 		case <-ctx.Done():
-			errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
+			select {
+			case errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel"):
+			default:
+			}
 			return
-		case <-t.C:
+		case <-timer.C:
 			log.Print("scheduler.RunScheduler: scheduler is run")
 			for name, data := range src.Sources {
-				log.Printf("scheduler.RunScheduler: siurce %s took on the task", name)
+				log.Printf("scheduler.RunScheduler: source %s took on the task", name)
 				select {
 				case <-ctx.Done():
-					errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel")
+					select {
+					case errCh <- fmt.Errorf("source.UnidataFLSource.Pool: context cancel"):
+					default:
+					}
 					return
 				case tasksCh <- data:
 				}
 			}
-			t.Reset(tik)
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+			timer.Reset(tik)
 		}
 	}
 }
