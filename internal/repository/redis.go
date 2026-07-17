@@ -62,9 +62,9 @@ func (r *Redis) Get(ctx context.Context, id string) ([]byte, error) {
 	data, err := r.RClient.Get(ctx, key).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, fmt.Errorf("repository.Redis.Get:{%v} data not found in redis by key %s", ctx.Value("operId"), key)
+			return nil, fmt.Errorf("repository.Redis.Get:{%v} data not found in redis by key %s. %v", ctx.Value("operId"), key, err)
 		}
-		return nil, fmt.Errorf("repository.Redis.Get:{%v} failed get data from redis by key %s", ctx.Value("operId"), key)
+		return nil, fmt.Errorf("repository.Redis.Get:{%v} failed get data from redis by key %s. %v", ctx.Value("operId"), key, err)
 	}
 	log.Printf("repository.Redis.Get:{%v} get data in redis is successful: key=%s", ctx.Value("operId"), key)
 	return data, nil

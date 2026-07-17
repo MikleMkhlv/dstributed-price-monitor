@@ -79,7 +79,7 @@ func (p *Postgres) GetByID(ctx context.Context, id string) ([]byte, error) {
 	var data []byte
 	if err := p.Pool.QueryRow(ctx, query, id).Scan(&data); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("repository.Postgres.GetByID:{%v} data is not found. id=%s", ctx.Value("operId"), id)
+			return nil, fmt.Errorf("repository.Postgres.GetByID:{%v} data is not found. id=%s. %v", ctx.Value("operId"), id, err)
 		}
 		return nil, fmt.Errorf("repository.Postgres.GetByID:{%v}: %v", ctx.Value("operId"), err)
 	}

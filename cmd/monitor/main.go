@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"dstributed-price-monitor/config"
+	"dstributed-price-monitor/internal/agregator"
 	"dstributed-price-monitor/internal/repository"
 	"dstributed-price-monitor/internal/scheduler"
 	"dstributed-price-monitor/internal/source"
 	"dstributed-price-monitor/internal/worker"
 	"flag"
-	"log"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -20,6 +20,7 @@ func main() {
 	defer cancel()
 	wg := sync.WaitGroup{}
 	outCh := make(chan source.ServiceData)
+	// TODO: errorCh Сейчас буфферизированный. Когда буфер заполнится, то программа залочится. В будущем надо канал этот читать
 	errorCh := make(chan error, 100)
 	tasksCh := make(chan source.Record)
 	cfg := config.MustLoadConfig(configPath())
@@ -29,6 +30,7 @@ func main() {
 
 	db := repository.NewPG(ctx, cfg)
 	rds := repository.NewRedis(ctx, cfg)
+	agr := agregator.New(db, rds)
 
 	wg.Add(1)
 	go func() {
@@ -45,17 +47,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for data := range outCh {
-			switch d := data.(type) {
-			case source.Citizen:
-				log.Printf("main.Consumer. Citizen:%s", d.String())
-			case source.Organization:
-				log.Printf("main.Consumer. Org:%s", d.String())
-			default:
-				log.Println("unknown type")
-				continue
-			}
-		}
+		agr.Comparable(ctx, outCh)
 	}()
 
 	<-ctx.Done()

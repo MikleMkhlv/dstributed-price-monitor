@@ -97,7 +97,6 @@ func (c *UnidataFLSource) Pool(ctx context.Context, outCh chan ServiceData, errC
 				}
 
 			}
-			// log.Printf("source.Pool: decode citizen complete. %s", citizens[0].String())
 
 			select {
 			case <-ctxT.Done():
@@ -122,6 +121,7 @@ type Citizen struct {
 }
 
 type CitizenData struct {
+	MdmId          string `json:"mdm_id"`
 	LastName       string `json:"last_name"`
 	FirstName      string `json:"given_name_one"`
 	MiddleName     string `json:"given_name_two"`
@@ -135,4 +135,13 @@ func (ctz Citizen) String() string {
 	fmt.Fprintf(&citizen, "firstName:%s, lastName:%s, middleName:%s, valMask:%d\n", ctz.Data.FirstName,
 		ctz.Data.LastName, ctz.Data.MiddleName, ctz.Data.ValidationMask)
 	return citizen.String()
+}
+
+func (ctz Citizen) Marshal(ctx context.Context) ([]byte, error) {
+	data, err := json.Marshal(&ctz)
+	if err != nil {
+		return nil, fmt.Errorf("source.Citizen.Marshal:{%v}: error marshaled citizen", ctx.Value("operId"))
+	}
+	log.Printf("source.Citizen.Marshal:{%v}: marshaled data is successful", ctx.Value("operId"))
+	return data, nil
 }

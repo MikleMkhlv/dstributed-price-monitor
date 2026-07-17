@@ -13,6 +13,10 @@ type Record interface {
 type ServiceData interface {
 	IsImpl()
 }
+
+type ServiceAgregats interface {
+	Comparable(ctx context.Context, data chan ServiceData)
+}
 type Source struct {
 	Sources map[string]Record
 }
