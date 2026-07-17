@@ -115,7 +115,7 @@ func (a *Agregator) checkDifferenceInRedis(ctx context.Context, id string, data 
 		return false, nil
 	}
 	log.Printf("agregator.Agregator.checkDifferenceInRedis: to be differences data by id=%s", id)
-	log.Printf("agregator.Agregator.checkDifferenceInRedis: to:= %s, posle:=%s", string(receivData), string(data))
+	log.Printf("agregator.Agregator.checkDifferenceInRedis: to:= %s, after:=%s", string(receivData), string(data))
 	return true, nil
 }
 

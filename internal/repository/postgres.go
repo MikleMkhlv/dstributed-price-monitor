@@ -98,9 +98,9 @@ func (p *Postgres) Update(ctx context.Context, id string, data []byte) ([]byte, 
 			trz.Rollback(ctx)
 		}
 	}()
-	tempData := struct {
+	tempData := &struct {
 		Id     int
-		Obj_id int
+		Obj_id string
 		Data   []byte
 	}{}
 
@@ -113,8 +113,10 @@ func (p *Postgres) Update(ctx context.Context, id string, data []byte) ([]byte, 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("repository.Postgres.Update:{%v} data not found by id = %s. %v", ctx.Value("operId"), id, err)
 		}
+		return nil, err
 	}
-	if string(tempData.Data) != string(data) {
+	if string(tempData.Data) == string(data) {
+		log.Printf("repository.Postgres.Update:{%v}to:= %s, after:=%s", ctx.Value("operId"), string(data), string(tempData.Data))
 		return nil, fmt.Errorf("repository.Postgres.Update:{%v} The data has not changed by id = %s", ctx.Value("operId"), id)
 	}
 
