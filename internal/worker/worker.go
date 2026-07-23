@@ -47,4 +47,5 @@ func (w *Worker) RunWorker(ctx context.Context, tasksCh chan source.Record, outC
 			}
 		}(i)
 	}
+	w.wg.Wait()
 }

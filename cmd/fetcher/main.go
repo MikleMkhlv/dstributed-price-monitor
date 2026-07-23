@@ -23,6 +23,7 @@ func main() {
 	cfgFtc := fet.NewFetchConfig()
 	cfg := config.MustLoadConfig(configPath())
 	server := fet.NewServer(fetchCh, cfgFtc)
+	client := fet.NewClient(outCh, cfg)
 	worker := worker.New(cfg.Scheduler.CountWorker, cfg.Scheduler.MaxCalls)
 
 	wg.Add(1)
@@ -31,6 +32,12 @@ func main() {
 		if err := server.RunServer(); err != nil {
 			log.Fatal(err)
 		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		client.SendToMonitor(ctx)
 	}()
 
 	wg.Add(1)

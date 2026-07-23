@@ -24,12 +24,6 @@ func NewHandler(ch chan source.Record) *Handler {
 func (h *Handler) PrepareFetchMid() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		errResp := dto.FetchResponce{Status: "error"}
-		if len(h.FetchCh) == cap(h.FetchCh) {
-			errResp.SetMessage(fmt.Errorf("fetcher.Handler.PrepareFetchMid: fetch chanal is crowded"))
-			c.JSON(http.StatusServiceUnavailable, errResp)
-			c.Abort()
-			return
-		}
 		// currentOperationID := c.Request.Response.Header.Get("operationId")
 		currentOperationID := c.GetHeader("operationId")
 		if currentOperationID == "" {
@@ -59,7 +53,6 @@ func (h *Handler) Fetch(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
-	req.OperationId = c.GetHeader("operationId")
 	select {
 	case <-c.Request.Context().Done():
 		return
