@@ -12,9 +12,9 @@ import (
 )
 
 type UnidataULSource struct {
-	url    string
-	method string
-	mdmIds []string
+	Url    string
+	Method string
+	MdmIds []string
 
 	timeOut int
 	client  *http.Client
@@ -34,9 +34,9 @@ func NewUnidataULSource(url string, method string, timeOut int, data []string) (
 		return nil, fmt.Errorf("source.UnidataULSource.NewUnidataULSource: data must not be empty")
 	}
 	return &UnidataULSource{
-		url:     url,
-		method:  method,
-		mdmIds:  data,
+		Url:     url,
+		Method:  method,
+		MdmIds:  data,
 		timeOut: timeOut,
 		client:  &http.Client{},
 		wg:      sync.WaitGroup{},
@@ -44,7 +44,7 @@ func NewUnidataULSource(url string, method string, timeOut int, data []string) (
 }
 
 func (c *UnidataULSource) Pool(ctx context.Context, outCh chan ServiceData, errCh chan error) {
-	for _, id := range c.mdmIds {
+	for _, id := range c.MdmIds {
 		func() {
 			ctxT, cancel := context.WithTimeout(ctx, time.Duration(time.Second*time.Duration(c.timeOut)))
 			defer cancel()
@@ -63,12 +63,12 @@ func (c *UnidataULSource) Pool(ctx context.Context, outCh chan ServiceData, errC
 				case errCh <- errMessage:
 				}
 			}
-			req, err := http.NewRequestWithContext(ctxT, "GET", buildFullUrl(c.url, c.method, id), nil)
+			req, err := http.NewRequestWithContext(ctxT, "GET", buildFullUrl(c.Url, c.Method, id), nil)
 			if err != nil {
 				errSend(ctxT, fmt.Errorf("source.UnidataULSource.Pool: error pool request: %v", err))
 				return
 			}
-			log.Printf("source.UnidataULSource.Pool:{%v}: send request in %s", ctxT.Value("operId"), buildFullUrl(c.url, c.method, id))
+			log.Printf("source.UnidataULSource.Pool:{%v}: send request in %s", ctxT.Value("operId"), buildFullUrl(c.Url, c.Method, id))
 			resp, err := c.client.Do(req)
 			if err != nil {
 				errSend(ctxT, fmt.Errorf("source.UnidataULSource.Pool: error send request: %v", err))

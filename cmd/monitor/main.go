@@ -6,9 +6,10 @@ import (
 	"dstributed-price-monitor/internal/agregator"
 	"dstributed-price-monitor/internal/repository"
 	"dstributed-price-monitor/internal/scheduler"
+	srv "dstributed-price-monitor/internal/scheduler/server"
 	"dstributed-price-monitor/internal/source"
-	"dstributed-price-monitor/internal/worker"
 	"flag"
+	"log"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -24,9 +25,12 @@ func main() {
 	errorCh := make(chan error, 100)
 	tasksCh := make(chan source.Record)
 	cfg := config.MustLoadConfig(configPath())
+	cfgMou := srv.NewFetchConfig()
 	sources := source.NewSource(*cfg)
 	tic := time.Second * time.Duration(cfg.Scheduler.Interval)
-	worker := worker.New(cfg.Scheduler.CountWorker, cfg.Scheduler.MaxCalls)
+
+	server := srv.NewServer(outCh, cfgMou)
+	client := scheduler.NewClient(tasksCh, errorCh, cfg)
 
 	db := repository.NewPG(ctx, cfg)
 	rds := repository.NewRedis(ctx, cfg)
@@ -35,7 +39,15 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		worker.RunWorker(ctx, tasksCh, outCh, errorCh)
+		if err := server.RunServer(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		client.SendToFetch(ctx)
 	}()
 
 	wg.Add(1)
@@ -57,6 +69,7 @@ func main() {
 		close(errorCh)
 		db.Close()
 		rds.Close()
+		server.Stop()
 	}()
 }
 

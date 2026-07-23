@@ -14,6 +14,7 @@ type Config struct {
 	Database  DatabaseConfig  `yaml:"database"`
 	Redis     RedisConfig     `yaml:"redis"`
 	Sources   []Sources       `yaml:"sources"`
+	General   GeneralConfig   `yaml:"general"`
 }
 type SchedulerConfig struct {
 	Interval    int `yaml:"interval"`
@@ -36,6 +37,11 @@ type RedisConfig struct {
 	Password string      `yaml:"password"`
 	NumberDB int         `yaml:"numberDB"`
 	Db       RedisDBConf `yaml:"db"`
+}
+
+type GeneralConfig struct {
+	MonitorAddress string `yaml:"monitor_address"`
+	FetchAddress   string `yaml:"fetch_address"`
 }
 
 type RedisDBConf struct {
