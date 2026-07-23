@@ -24,6 +24,24 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --requirepass my_secure_password --appendonly yes
+  
+  monitor:
+    build:
+      context: .
+      dockerfile: ./cmd/monitor/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      APPLICATION_ADDRESS: "127.0.0.1"
+      APPLICATION_PORT: "8081"
+    volumes:
+      - ./conf_test.yaml:/app/conf_test.yaml
+    depends_on:
+      - db
+      - redis
+
+
+
 volumes:
   postgres_data:
   redis_data:
