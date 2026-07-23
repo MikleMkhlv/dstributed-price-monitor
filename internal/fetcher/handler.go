@@ -3,6 +3,8 @@ package fetcher
 import (
 	"context"
 	dto "dstributed-price-monitor/api/dto"
+	"dstributed-price-monitor/internal/fetcher/mapper"
+	"dstributed-price-monitor/internal/source"
 	"fmt"
 	"net/http"
 
@@ -10,10 +12,10 @@ import (
 )
 
 type Handler struct {
-	FetchCh chan dto.FetchRequest
+	FetchCh chan source.Record
 }
 
-func NewHandler(ch chan dto.FetchRequest) *Handler {
+func NewHandler(ch chan source.Record) *Handler {
 	return &Handler{
 		FetchCh: ch,
 	}
@@ -28,7 +30,8 @@ func (h *Handler) PrepareFetchMid() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		currentOperationID := c.Request.Response.Header.Get("operationId")
+		// currentOperationID := c.Request.Response.Header.Get("operationId")
+		currentOperationID := c.GetHeader("operationId")
 		if currentOperationID == "" {
 			errResp.SetMessage(fmt.Errorf("fetcher.Handler.PrepareFetchMid: Header operationId is empty. operationId is required field"))
 			c.JSON(http.StatusServiceUnavailable, errResp)
@@ -50,10 +53,38 @@ func (h *Handler) Fetch(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errResp)
 		return
 	}
+	soucre, err := mapFetchToRecord(req)
+	if err != nil {
+		errResp.SetMessage(err)
+		c.JSON(http.StatusBadRequest, errResp)
+		return
+	}
+	req.OperationId = c.GetHeader("operationId")
 	select {
 	case <-c.Request.Context().Done():
 		return
-	case h.FetchCh <- req:
+	case h.FetchCh <- soucre:
 		c.JSON(http.StatusAccepted, dto.FetchResponce{Status: "success", Message: "Processing started"})
+	}
+}
+
+func mapFetchToRecord(data dto.FetchRequest) (source.Record, error) {
+	var mapper mapper.FetchMaper
+	switch d := data.Type; d {
+	case "unidata_fl":
+		res, err := mapper.FetchRequestToUnidataFLSource(data)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	case "unidata_ul":
+		res, err := mapper.FetchRequestToUnidataULSource(data)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	default:
+		errMsg := fmt.Errorf("fetcher.Handler.mapFetchToRecord: unknown source type. type = %s", d)
+		return nil, errMsg
 	}
 }

@@ -2,7 +2,9 @@ package dto
 
 type FetchRequest struct {
 	Type        string   `json:"type"`
-	FullAddress string   `json:"address"`
+	OperationId string   `json:"operationId"`
+	Address     string   `json:"address"`
+	Method      string   `json:"method"`
 	Data        []string `json:"data"`
 }
 

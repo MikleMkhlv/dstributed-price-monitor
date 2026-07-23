@@ -2,7 +2,7 @@ package fetcher
 
 import (
 	"context"
-	dto "dstributed-price-monitor/api/dto"
+	"dstributed-price-monitor/internal/source"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,7 +20,7 @@ type Server struct {
 	httpSrv  *http.Server
 }
 
-func NewServer(fetchCh chan dto.FetchRequest, cfg *FetchConfig) *Server {
+func NewServer(fetchCh chan source.Record, cfg *FetchConfig) *Server {
 	addr := fmt.Sprintf("%s:%s", cfg.AddresServer, cfg.PortServer)
 	router := gin.Default()
 	return &Server{
