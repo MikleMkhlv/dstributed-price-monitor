@@ -7,13 +7,13 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o monitor ./cmd/monitor
+RUN CGO_ENABLED=0 GOOS=linux go build -o fetcher ./cmd/fetcher
 
 FROM alpine:3.19
 WORKDIR /app
 
-COPY --from=builder /build/monitor .
+COPY --from=builder /build/fetcher .
 
 EXPOSE 8081 5432 5432/tcp 6379 6379/tcp 6379/udp
 
-CMD ["./monitor", "-configPath=conf_test.yaml"]
+CMD ["./fetcher", "-configPath=conf_test.yaml"]

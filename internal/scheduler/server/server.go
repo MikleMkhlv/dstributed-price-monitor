@@ -39,7 +39,7 @@ func NewServer(monitorCh chan source.ServiceData, cfg *MonitorConfig) *Server {
 func (s *Server) RunServer() error {
 	s.router.POST("/api/monitor", s.Handlers.PrepareMonitorMid(), s.Handlers.Monitor)
 
-	addr := fmt.Sprintf("%s:%s", s.Address, s.Port)
+	addr := fmt.Sprintf(":%s", s.Port)
 	log.Printf("server.Server.RunServer: server run on %s", addr)
 
 	if err := s.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

@@ -39,7 +39,7 @@ func NewServer(fetchCh chan source.Record, cfg *FetchConfig) *Server {
 func (s *Server) RunServer() error {
 	s.router.POST("/api/fetch", s.Handlers.PrepareFetchMid(), s.Handlers.Fetch)
 
-	addr := fmt.Sprintf("%s:%s", s.Address, s.Port)
+	addr := fmt.Sprintf(":%s", s.Port)
 	log.Printf("fetcher.Server.RunServer: server run on %s", addr)
 
 	if err := s.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

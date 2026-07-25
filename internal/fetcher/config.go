@@ -10,8 +10,11 @@ type FetchConfig struct {
 func NewFetchConfig() *FetchConfig {
 	address := os.Getenv("APPLICATION_ADDRESS")
 	port := os.Getenv("APPLICATION_PORT")
-	if address == "" || port == "" {
-		panic("fetcher.FetchConfig.NewFetchConfig: APPLICSTION_ADDRESS and APPLICATION_PORT is required")
+	// if address == "" || port == "" {
+	// 	panic("fetcher.FetchConfig.NewFetchConfig: APPLICSTION_ADDRESS and APPLICATION_PORT is required")
+	// }
+	if port == "" {
+		panic("fetcher.FetchConfig.NewFetchConfig: APPLICATION_PORT is required")
 	}
 	return &FetchConfig{
 		AddresServer: address,
