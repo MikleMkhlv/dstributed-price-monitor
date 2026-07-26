@@ -37,6 +37,17 @@ services:
       - redis_data:/data
     command: redis-server --requirepass my_secure_password --appendonly yes
 
+  nats:
+    image: nats:latest
+    container_name: nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      dst:
+        ipv4_address: 10.5.0.7
+    
+
   
   monitor:
     build:
