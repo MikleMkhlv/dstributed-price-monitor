@@ -11,7 +11,7 @@ import (
 )
 
 type Nats struct {
-	conn *nats.Conn
+	Conn *nats.Conn
 }
 
 func NewNats(cfg *config.Config) (*Nats, error) {
@@ -31,15 +31,15 @@ func NewNats(cfg *config.Config) (*Nats, error) {
 
 	log.Print("broker.Nats.NewNats: connections with nuts is sucessfull:", ns.Status())
 	return &Nats{
-		conn: ns,
+		Conn: ns,
 	}, nil
 }
 
 func (n *Nats) Close() error {
-	if n.conn == nil {
+	if n.Conn == nil {
 		return fmt.Errorf("The nuts connections had already been broken.")
 	}
-	n.conn.Close()
+	n.Conn.Close()
 	fmt.Print("broker.Nats.NewNats: connections with nuts is close")
 	return nil
 }

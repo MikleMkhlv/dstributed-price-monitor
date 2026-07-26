@@ -4,6 +4,7 @@ import (
 	"context"
 	"dstributed-price-monitor/config"
 	"dstributed-price-monitor/internal/agregator"
+	"dstributed-price-monitor/internal/broker"
 	"dstributed-price-monitor/internal/repository"
 	"dstributed-price-monitor/internal/scheduler"
 	srv "dstributed-price-monitor/internal/scheduler/server"
@@ -30,7 +31,12 @@ func main() {
 	tic := time.Second * time.Duration(cfg.Scheduler.Interval)
 
 	server := srv.NewServer(outCh, cfgMou)
-	client := scheduler.NewClient(tasksCh, errorCh, cfg)
+	// client := scheduler.NewClient(tasksCh, errorCh, cfg)
+	natsCon, err := broker.NewNats(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sub, err := broker.NewSubscription(natsCon, outCh)
 
 	db := repository.NewPG(ctx, cfg)
 	rds := repository.NewRedis(ctx, cfg)
@@ -44,11 +50,15 @@ func main() {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		client.SendToFetch(ctx)
-	}()
+	if err := sub.Start("test"); err != nil {
+		log.Print(err)
+	}
+
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	client.SendToFetch(ctx)
+	// }()
 
 	wg.Add(1)
 	go func() {
@@ -70,6 +80,8 @@ func main() {
 		db.Close()
 		rds.Close()
 		server.Stop()
+		sub.Stop()
+		natsCon.Close()
 	}()
 }
 
