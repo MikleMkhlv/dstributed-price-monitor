@@ -6,10 +6,13 @@ import (
 	"dstributed-price-monitor/config"
 	"dstributed-price-monitor/internal/broker"
 	"dstributed-price-monitor/internal/fetcher/mapper"
+	"dstributed-price-monitor/internal/logs"
 	"dstributed-price-monitor/internal/source"
 	"dstributed-price-monitor/internal/worker"
 	"flag"
+	"fmt"
 	"log"
+	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -56,6 +59,23 @@ func main() {
 	go func() {
 		defer wg.Done()
 		worker.RunWorker(ctx, fetchCh, outCh, errorCh)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		path := "/data/logs/fetcher_errors.log"
+		info, err := os.Stat(path)
+		if err == nil && info.IsDir() {
+			fmt.Printf("Fatal error: path %s occupied by the directory !\n", path)
+			return
+		}
+		file, err := os.Create(path)
+		if err != nil {
+			log.Fatalf("error creete log file from errors. %v", err)
+		}
+		defer file.Close()
+		logs.LogWriter(file, errorCh)
 	}()
 
 	go func() {

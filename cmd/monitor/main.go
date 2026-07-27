@@ -6,11 +6,14 @@ import (
 	"dstributed-price-monitor/config"
 	"dstributed-price-monitor/internal/agregator"
 	"dstributed-price-monitor/internal/broker"
+	"dstributed-price-monitor/internal/logs"
 	"dstributed-price-monitor/internal/repository"
 	"dstributed-price-monitor/internal/scheduler"
 	"dstributed-price-monitor/internal/source"
 	"flag"
+	"fmt"
 	"log"
+	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -65,6 +68,23 @@ func main() {
 	go func() {
 		defer wg.Done()
 		scheduler.RunScheduler(ctx, sources, tic, *pub, cfg, tasksCh, errorCh)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		path := "/data/logs/monitor_errors.log"
+		info, err := os.Stat(path)
+		if err == nil && info.IsDir() {
+			fmt.Printf("Fatal error: path %s occupied by the directory !\n", path)
+			return
+		}
+		file, err := os.Create(path)
+		if err != nil {
+			log.Fatalf("error creete log file from errors. %v", err)
+		}
+		defer file.Close()
+		logs.LogWriter(file, errorCh)
 	}()
 
 	wg.Add(1)

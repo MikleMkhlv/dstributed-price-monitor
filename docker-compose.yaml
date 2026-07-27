@@ -63,6 +63,7 @@ services:
       APPLICATION_PORT: "8081"
     volumes:
       - ./conf_test.yaml:/app/conf_test.yaml
+      - ./logs:/data/logs/
     depends_on:
       - db
       - redis
@@ -81,6 +82,7 @@ services:
       APPLICATION_PORT: "8082"
     volumes:
       - ./conf_test.yaml:/app/conf_test.yaml
+      - ./logs:/data/logs/
 
 
 

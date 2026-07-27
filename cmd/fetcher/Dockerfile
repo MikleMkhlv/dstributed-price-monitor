@@ -11,6 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o fetcher ./cmd/fetcher
 
 FROM alpine:3.19
 WORKDIR /app
+RUN mkdir -p /data/logs && chmod 777 /data/logs
 
 COPY --from=builder /build/fetcher .
 
