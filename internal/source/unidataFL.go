@@ -12,6 +12,7 @@ import (
 )
 
 type UnidataFLSource struct {
+	Type    string
 	Url     string
 	Method  string
 	MdmIds  []string
@@ -33,6 +34,7 @@ func NewUnidataFLSource(url string, method string, timeout int, data []string) (
 		return nil, fmt.Errorf("source.NewUnidataFLSource: data must not be empty")
 	}
 	return &UnidataFLSource{
+		Type:    "unidata_fl",
 		Url:     url,
 		Method:  method,
 		MdmIds:  data,

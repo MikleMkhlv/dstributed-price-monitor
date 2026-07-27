@@ -43,6 +43,11 @@ type RedisConfig struct {
 type NatsConfig struct {
 	Address string `yaml:"address"`
 	Timeout int    `yaml:"timeout"`
+	Queues  Queue  `yaml:"queues"`
+}
+type Queue struct {
+	InFetch   string `yaml:"in_fetc"`
+	InMonitor string `yaml:"in_monitor"`
 }
 
 type GeneralConfig struct {

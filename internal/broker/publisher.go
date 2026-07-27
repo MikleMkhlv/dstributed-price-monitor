@@ -3,6 +3,9 @@ package broker
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+
+	"github.com/google/uuid"
 
 	"github.com/nats-io/nats.go"
 )
@@ -22,8 +25,16 @@ func NewPublisher[T any](conn *Nats) (*Publisher[T], error) {
 
 func (p *Publisher[T]) Publish(subject string, data T) error {
 	payload, err := json.Marshal(data)
+	log.Printf("DEBUG: pub payload = %s", string(payload))
 	if err != nil {
 		return err
 	}
-	return p.Conn.Publish(subject, payload)
+	msg := &nats.Msg{
+		Subject: subject,
+		Data:    payload,
+		Header:  nats.Header{},
+	}
+	operationID := uuid.New().String()
+	msg.Header.Set("operationId", operationID)
+	return p.Conn.PublishMsg(msg)
 }

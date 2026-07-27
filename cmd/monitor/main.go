@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"dstributed-price-monitor/api/dto"
 	"dstributed-price-monitor/config"
 	"dstributed-price-monitor/internal/agregator"
 	"dstributed-price-monitor/internal/broker"
 	"dstributed-price-monitor/internal/repository"
 	"dstributed-price-monitor/internal/scheduler"
-	srv "dstributed-price-monitor/internal/scheduler/server"
 	"dstributed-price-monitor/internal/source"
 	"flag"
 	"log"
@@ -26,31 +26,32 @@ func main() {
 	errorCh := make(chan error, 100)
 	tasksCh := make(chan source.Record)
 	cfg := config.MustLoadConfig(configPath())
-	cfgMou := srv.NewFetchConfig()
+	// cfgMou := srv.NewFetchConfig()
 	sources := source.NewSource(*cfg)
 	tic := time.Second * time.Duration(cfg.Scheduler.Interval)
 
-	server := srv.NewServer(outCh, cfgMou)
+	// server := srv.NewServer(outCh, cfgMou)
 	// client := scheduler.NewClient(tasksCh, errorCh, cfg)
 	natsCon, err := broker.NewNats(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 	sub, err := broker.NewSubscription(natsCon, outCh)
+	pub, err := broker.NewPublisher[dto.FetchRequest](natsCon)
 
 	db := repository.NewPG(ctx, cfg)
 	rds := repository.NewRedis(ctx, cfg)
 	agr := agregator.New(db, rds)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := server.RunServer(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	if err := server.RunServer(); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }()
 
-	if err := sub.Start("test"); err != nil {
+	if err := sub.Start(cfg.Nats.Queues.InMonitor, "fromFetc"); err != nil {
 		log.Print(err)
 	}
 
@@ -63,7 +64,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		scheduler.RunScheduler(ctx, sources, tic, tasksCh, errorCh)
+		scheduler.RunScheduler(ctx, sources, tic, *pub, cfg, tasksCh, errorCh)
 	}()
 
 	wg.Add(1)
@@ -79,7 +80,7 @@ func main() {
 		close(errorCh)
 		db.Close()
 		rds.Close()
-		server.Stop()
+		// server.Stop()
 		sub.Stop()
 		natsCon.Close()
 	}()

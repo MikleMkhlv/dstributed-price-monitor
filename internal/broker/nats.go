@@ -20,7 +20,8 @@ func NewNats(cfg *config.Config) (*Nats, error) {
 		addr = nats.DefaultURL
 	}
 
-	strings.TrimSpace(addr)
+	addr = strings.TrimSpace(addr)
+
 	ns, err := nats.Connect(
 		addr,
 		nats.Timeout(time.Second*time.Duration(cfg.Nats.Timeout)),

@@ -12,6 +12,7 @@ import (
 )
 
 type UnidataULSource struct {
+	Type   string
 	Url    string
 	Method string
 	MdmIds []string
@@ -34,6 +35,7 @@ func NewUnidataULSource(url string, method string, timeOut int, data []string) (
 		return nil, fmt.Errorf("source.UnidataULSource.NewUnidataULSource: data must not be empty")
 	}
 	return &UnidataULSource{
+		Type:    "unidata_ul",
 		Url:     url,
 		Method:  method,
 		MdmIds:  data,
