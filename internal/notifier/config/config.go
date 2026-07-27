@@ -39,38 +39,6 @@ type EmailConfig struct {
 	From     string `yaml:"from"`
 }
 
-// type Channel interface {
-// 	Send(ctx context.Context, notification Notification) error
-// 	Name() string
-// }
-
-// type ChannelFactory func(cfg ChannelConfig) (Channel, error)
-
-// var registry = map[string]ChannelFactory{
-// 	"telegram": NewTelegramChannel,
-// 	"webhook":  NewWebhookChannel,
-// 	"email":    NewEmailChannel,
-// }
-
-// func BuildChannels(configs []ChannelConfig) ([]Channel, error) {
-// 	var channels []Channel
-// 	for _, cfg := range configs {
-// 		if !cfg.Enabled {
-// 			continue
-// 		}
-// 		factory, ok := registry[cfg.Type]
-// 		if !ok {
-// 			return nil, fmt.Errorf("unknown channel type: %s", cfg.Type)
-// 		}
-// 		ch, err := factory(cfg)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("build channel %s: %w", cfg.Type, err)
-// 		}
-// 		channels = append(channels, ch)
-// 	}
-// 	return channels, nil
-// }
-
 func LoadNotifierConfig(pathConf string) (*NotifierConfig, error) {
 	if pathConf == "" {
 		panic("notifier.config.LoadNotifierConfig: path configuration is Empty")
