@@ -1,0 +1,19 @@
+channels:
+  - type: "telegram"
+    enabled: true
+    telegram:
+      token: 21312312
+      chat_id: 1244214112
+  - type: "webhook"
+    enabled: false
+    webhook:
+      url:
+      method:
+      timeout: 3s
+      headers:
+  - type: "email"
+    enabled: false
+    email:
+      smtp_host:
+      smtp_port:
+      from:
